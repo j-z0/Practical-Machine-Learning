@@ -54,7 +54,7 @@ pred.test<-predict(model1,testing)
 confusionMatrix(pred.test,testing$classe)
 ```
 
-From the confusionMatrix, we can see that the random forest yielded very good accuracy of 99.8% when applied on the testing set. For this reason, I decided a cross-validation (k-fold, leave-one-out, etc) was not needed.
+From the confusionMatrix, we can see that the random forest yielded very good accuracy of 99.8% when applied on the testing set. The out-of-sample error in this case is only 0.2%. For this reason, I decided a cross-validation (k-fold, leave-one-out, etc) was not needed.
 
 ###Predicting the last 20 cases
 I confidently applied my model to the validation set, which is the 20 cases that will be graded.
