@@ -1,0 +1,72 @@
+---
+title: "Practical Machine Learning - Course Project"
+author: "Jacky Wenjian Zhang"
+date: "December 26, 2015"
+output: html_document
+---
+
+###Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+###Objective
+
+The objective of this project is to predict the manner in which the subjects completed the exercise based on the data collected through these fitness devices.
+
+###Data Processing and Exploration
+Load in the required packages, seed the seed for reproducibility, and load in the .csv files
+```{r,message=F,warning=F}
+library(caret)
+library(dplyr)
+library(randomForest)
+
+set.seed(512)
+setwd("D:/My Stuff/Coursera/8. Practical Machine Learning/Course Project/")
+data<-read.csv("pml-training.csv")
+validation<-read.csv("pml-testing.csv")
+```
+
+Explore the training data set to identify variables that might not be good predictor variables. In the end, I removed the index variable, the timestamp variables (has a lot of factors, and does not provide much information), and all the variables with >95% NA or missing values.
+```{r, results="hide"}
+names(data)
+summary(data)
+
+#Remove the "X" variable because its just an index variable
+#Remove the variables with mostly NA or blank values
+data.clean<-data[,-c(1:6,12:36,50:59,69:83,87:101,103:112,125:139,141:150)]
+validation<-validation[,-c(1:6,12:36,50:59,69:83,87:101,103:112,125:139,141:150)]
+```
+
+
+To ensure that my model is not overly-optimistic, I further divided the training data set into training set (70%) and testing set (30%), so I can assess the quality of my model before submitting my answers.
+```{r}
+#Divide the training set into training and testing set
+inTrain<-createDataPartition(data.clean$classe,p=0.7,list=FALSE)
+training<-data.clean[inTrain,]
+testing<-data.clean[-inTrain,]
+```
+
+###Model Building: Random Forest
+Since the outcome variable is categorical, I believe that the random forest machine learning model would be a good candidate. I set the "classe" variable as the outcome variable and all the remaining variables in the data set to be predictor variables.
+```{r}
+model1<-randomForest(classe~.,data=training)
+pred.test<-predict(model1,testing)
+confusionMatrix(pred.test,testing$classe)
+```
+
+From the confusionMatrix, we can see that the random forest yielded very good accuracy of 99.8% when applied on the testing set. For this reason, I decided a cross-validation (k-fold, leave-one-out, etc) was not needed.
+
+###Predicting the last 20 cases
+I confidently applied my model to the validation set, which is the 20 cases that will be graded.
+```{r}
+pred.validate<-predict(model1,validation)
+answers<-pred.validate
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(answers)
+```
